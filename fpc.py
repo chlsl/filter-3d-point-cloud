@@ -38,7 +38,7 @@ def count_3d_neighbors(xyz, r, p):
     return out
 
 
-def remove_isolated_3d_points(xyz, r, p, n):
+def remove_isolated_3d_points(xyz, r, p, n, q=1):
     """ Remove isolated pixels or group of pixels in a gridded set of 3D points.
 
     Args:
@@ -51,12 +51,10 @@ def remove_isolated_3d_points(xyz, r, p, n):
     assert d == 3, 'expecting a 3-channels image with shape (h, w, 3)'
 
     lib.remove_isolated_3d_points.argtypes = (
-        ndpointer(dtype=c_int, shape=(h, w)),
         ndpointer(dtype=c_float, shape=(h, w, 3)),
-        c_int, c_int, c_float, c_int, c_int)
+        c_int, c_int, c_float, c_int, c_int, c_int)
 
-    out = np.zeros((h, w), dtype='int32')
-    lib.remove_isolated_3d_points(out, xyz, w, h, r, p, n)
+    lib.remove_isolated_3d_points(np.ascontiguousarray(xyz), w, h, r, p, n, q)
 
 
 def filter_xyz(xyz, r, n, img_gsd):
