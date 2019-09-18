@@ -21,10 +21,16 @@ figure(2); imshow(in_nan_vals);
 % algo:
 % step 1) find values that should be removed.
 %         they are far in intensity from the other ones in their neighborhood
-% step 2) 
+% step 2) progressively (iteratively) add back pixels that have been declared as
+%         outliers but that have
+%           1) at least one connected neighbor that is an inlier
+%           2) this particular neighbor is close to the current pixel. "close"
+%              must be understood here as "with a height difference under the
+%              given threshold". The threshold used is the same as for counting
+%              the 3D neighbors
 
 
-% step 1
+% === STEP 1 ===
 
 nb_of_neighbors = zeros(size(u));
 
@@ -49,39 +55,31 @@ v(rejected_pix) = NaN;
 figure(4); imshow(v);
 figure(5); imshow(rejected_pix_img); colormap winter
 
+% === STEP 2 ===
+
 flag = true;
 while flag
     flag = false;
-%     fprintf('beginning of turn\n');
     for p = rejected_pix'
         [rr, cc] = ind2sub(size(u), p);
-        
+
         % If the rejected pixel has (at least) one neighbor that is both not
         % rejected and close to its value, then it becomes not rejected too.
-
         rejected_local_patch = rejected_pix_img(...
                                max(1, rr-1) : min(size(u,1), rr+1), ...
                                max(1, cc-1) : min(size(u,2), cc+1));
         u_local_patch =      u(max(1, rr-1) : min(size(u,1), rr+1), ...
                                max(1, cc-1) : min(size(u,2), cc+1));
         not_rejected_pix = u_local_patch(~rejected_local_patch);
-                           
-%         fprintf('value = %5.3f (pix %3d %3d) rejected=%d.\n',...
-%                 u(rr, cc), rr, cc, rejected_pix_img(rr, cc));
-                           
+
         if ~isempty(not_rejected_pix)
-%             fprintf('Cond1 True...');
             if  sum(abs(not_rejected_pix - u(p)) < 0.2) > 0
                 rejected_pix_img(p) = false;
                 rejected_pix(rejected_pix == p) = [];
                 flag = true;
-%                 fprintf(' Cond2 True  (pix %3d %3d).\n', rr, cc);
-%             else
-%                 fprintf(' Cond2 False (pix %3d %3d).\n', rr, cc);
             end
         end
     end
-%     figure(5); imshow(rejected_pix_img); colormap winter
 end
 
 %%
